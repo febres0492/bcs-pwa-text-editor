@@ -3,6 +3,9 @@ const WebpackPwaManifest = require('webpack-pwa-manifest');
 const path = require('path');
 const { InjectManifest } = require('workbox-webpack-plugin');
 
+// TODO: Add and configure workbox plugins for a service worker and manifest file.
+// TODO: Add CSS loaders and babel to webpack.
+
 module.exports = () => {
     return {
         mode: 'development',
@@ -21,18 +24,22 @@ module.exports = () => {
             }),
             new InjectManifest({
                 swSrc: './src-sw.js',
-                swDest: 'service-worker.js'
+                swDest: 'src-sw.js'
             }),
             new WebpackPwaManifest({
                 name: 'Progressive Web App',
                 short_name: 'PWA',
-                description: 'My awesome Progressive Web App!',
+                description: 'A text editor that works offline!',
                 background_color: '#ffffff',
-                crossorigin: 'use-credentials', 
+                fingerprints: false,
+                inject: true,
+                start_url: '/',
+                publicPath: '/',
                 icons: [
                     {
                         src: path.resolve('src/images/logo.png'),
-                        sizes: [96, 128, 192, 256, 384, 512] 
+                        sizes: [96, 128, 192, 256, 384, 512],
+                        destination: path.join('assets', 'icons'),
                     }
                 ]
             })
@@ -52,14 +59,18 @@ module.exports = () => {
                             presets: ['@babel/preset-env']
                         }
                     }
+                },
+                {
+                    test: /src-sw\.js$/,
+                    use: {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: ['@babel/preset-env'],
+                            plugins: ['@babel/plugin-proposal-object-rest-spread', '@babel/transform-runtime'],
+                        }
+                    }
                 }
             ],
-        },
-        devServer: {
-            contentBase: path.join(__dirname, 'dist'),
-            compress: true,
-            port: 9000,
-            open: true, // Automatically open the browser
         },
     };
 };

@@ -30,7 +30,7 @@ registerRoute(({ request }) => request.mode === 'navigate', pageCache);
 registerRoute(
     // Match CSS, JS, and image files
     ({ request }) => ['style', 'script', 'image'].includes(request.destination),
-    new StaleWhileRevalidate({
+    new CacheFirst({
         cacheName: 'asset-cache',
         plugins: [
             new CacheableResponsePlugin({
