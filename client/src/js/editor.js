@@ -25,20 +25,38 @@ export default class {
         // When the editor is ready, set the value to whatever is stored in indexeddb.
         // Fall back to localStorage if nothing is stored in indexeddb, and if neither is available, set the value to header.
         getDb().then((data) => {
-            let dt = data || localData || header;
+            // fix for when data is an array
+            let dt = data[0].content || localData || header;
             console.info('Loaded data from IndexedDB, injecting into editor', )
-            console.log('data',data)
-            console.log('testlocalData',localData)
-            console.log('header',header)
-            dt = typeof dt === 'string' ? dt : dt[0].content
+            console.log('data',dt)
             this.editor.setValue(dt)
         });
 
+        // debouncer function
+        const debounce = (func, wait) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        };
+
+        //  putDb debouncer
+        const debouncedPutDb = debounce(() => {
+            putDb(localStorage.getItem('content'));
+        }, 1000);
+
         this.editor.on('change', () => {
+            console.log('The editor content has changed');
             localStorage.setItem('content', this.editor.getValue());
+
+            // the changes would not save if the user clicked refresh right after typing
+            // the event editor.on('blur') did not trigger when the user clicked refresh
+            // so i added a debounce function to save the data after a second
+            debouncedPutDb()
         });
 
-        // Save the content of the editor when the editor itself is loses focus
+        // Save the content of the editor when the editor itself loses focus
         this.editor.on('blur', () => {
             console.log('The editor has lost focus');
             putDb(localStorage.getItem('content'));
